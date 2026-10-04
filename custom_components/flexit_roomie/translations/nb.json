@@ -1,0 +1,17 @@
+{
+  "entity": {
+    "fan": {
+      "ventilation": {
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "ventilation": "Ventilasjon",
+              "heat_recovery": "Varmegjenvinning",
+              "air_supply": "Tilluft"
+            }
+          }
+        }
+      }
+    }
+  }
+}

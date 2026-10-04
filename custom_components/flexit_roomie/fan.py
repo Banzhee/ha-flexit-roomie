@@ -34,6 +34,7 @@ class RoomieFan(CoordinatorEntity[RoomieCoordinator], FanEntity):
     _attr_speed_count = 3
     _attr_preset_modes = PRESET_MODES
     _attr_icon = "mdi:hvac"
+    _attr_translation_key = "ventilation"
 
     def __init__(self, coordinator: RoomieCoordinator) -> None:
         super().__init__(coordinator)

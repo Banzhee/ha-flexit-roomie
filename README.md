@@ -10,7 +10,7 @@ Not affiliated with or endorsed by Flexit or Blauberg.
 ## Features
 
 - **Fan entity:** on/off, 3 speeds, and the three airflow modes as preset modes
-  (`ventilation`, `heat_recovery`, `air_supply`)
+  (Ventilation, Heat recovery, Air supply; translated to Norwegian Bokmål)
 - **Humidity sensor:** the humidity measured by the fan
 - Non-blocking async UDP; the fan is polled every 30 seconds and shows as
   unavailable if it stops answering
