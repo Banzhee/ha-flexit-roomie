@@ -1,32 +1,46 @@
 """Humidity sensor for Flexit Roomie."""
 from __future__ import annotations
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
 from homeassistant.const import PERCENTAGE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import DOMAIN, RoomieCoordinator
+from .const import DOMAIN
+from .coordinator import FlexitRoomieConfigEntry, RoomieCoordinator
+
+# No name: with has_entity_name the device class supplies it, translated by HA
+# ("Humidity" / "Luftfuktighet").
+HUMIDITY = SensorEntityDescription(
+    key="humidity",
+    device_class=SensorDeviceClass.HUMIDITY,
+    state_class=SensorStateClass.MEASUREMENT,
+    native_unit_of_measurement=PERCENTAGE,
+)
 
 
-async def async_setup_platform(
-    hass: HomeAssistant, config, async_add_entities: AddEntitiesCallback, discovery_info=None
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: FlexitRoomieConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
-    if discovery_info is None:
-        return
-    async_add_entities(RoomieHumidity(c) for c in hass.data[DOMAIN])
+    async_add_entities([RoomieHumidity(entry.runtime_data)])
 
 
 class RoomieHumidity(CoordinatorEntity[RoomieCoordinator], SensorEntity):
-    _attr_device_class = SensorDeviceClass.HUMIDITY
-    _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_native_unit_of_measurement = PERCENTAGE
+    _attr_has_entity_name = True
+    entity_description = HUMIDITY
 
     def __init__(self, coordinator: RoomieCoordinator) -> None:
         super().__init__(coordinator)
-        self._attr_name = f"{coordinator.name} Luftfuktighet"
         self._attr_unique_id = f"{DOMAIN}_{coordinator.client.host}_humidity"
+        self._attr_device_info = coordinator.device_info
 
     @property
     def native_value(self) -> int | None:

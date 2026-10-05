@@ -14,6 +14,8 @@ Not affiliated with or endorsed by Flexit or Blauberg.
 - **Humidity sensor:** the humidity measured by the fan
 - Non-blocking async UDP; the fan is polled every 30 seconds and shows as
   unavailable if it stops answering
+- **Set up from the UI:** add each fan under Settings → Devices & services; the address
+  is checked before the device is created
 - Unique IDs, so entities can be renamed and assigned to areas in the UI
 
 ## Compatibility
@@ -34,35 +36,40 @@ A reply starting with `b'master'` means the fan is supported.
 
 ### HACS (custom repository)
 
-1. HACS → ⋮ → **Custom repositories** → add this repository's URL, type **Integration**.
-2. Install **Flexit Roomie (EcoVent v1)**.
-3. Add the configuration below and restart Home Assistant.
+1. HACS → ⋮ → **Custom repositories** → add `https://github.com/Banzhee/ha-flexit-roomie`, type **Integration**.
+2. Install **Flexit Roomie (EcoVent v1)** and restart Home Assistant.
+3. **Settings → Devices & services → Add integration → Flexit Roomie**.
 
 ### Manual
 
 Copy `custom_components/flexit_roomie` into your Home Assistant `config/custom_components/`
-folder, add the configuration below and restart.
+folder, restart, then add the integration from **Settings → Devices & services**.
 
 ## Configuration
 
-`configuration.yaml`:
+Setup is done in the UI; there is nothing to put in `configuration.yaml`. Adding the
+integration asks for a name, the fan's IP address and the port (4000 unless you have
+changed it), and checks that the fan answers before the device is created. Add the
+integration once per fan.
 
-```yaml
-flexit_roomie:
-  devices:
-    - name: "Living room ventilation"
-      ip_address: 192.168.1.50
-      # port: 4000  # optional
-```
+Give each fan a fixed IP address (a DHCP reservation in your router) so it does not
+change later.
 
-Give the fan a fixed IP address (DHCP reservation) in your router.
+### Upgrading from 1.x
+
+The old YAML block is still read once: on the first start after upgrading, each device
+under `flexit_roomie:` is imported into the UI and a warning is logged. Entities keep
+their IDs and history. Delete the `flexit_roomie:` block from `configuration.yaml`
+afterwards.
 
 ## Entities
+
+Each fan becomes a device with two entities:
 
 | Entity | Description |
 |---|---|
 | `fan.<name>` | On/off, speed (33 / 67 / 100 %), preset mode |
-| `sensor.<name>_luftfuktighet` | Humidity (%) |
+| `sensor.<name>_humidity` | Relative humidity (%) measured by the fan |
 
 If a manual speed has been set in the app, the fan reports it as a percentage of the
 fan's manual range.
@@ -78,7 +85,10 @@ Packets are `6D6F62696C65` ("mobile") + command + `0D0A`, sent to UDP port 4000.
 | Set speed 1-3 | `04 0N` |
 | Set airflow mode 0-2 | `06 0N` |
 
-The status reply is `master` followed by (parameter, value) pairs. Protocol details are
+The status reply is `master` followed by (parameter, value) pairs. Parameter ids that are
+not in the table are skipped a byte at a time rather than ending the parse, because the
+fan sends ids that are not documented - one of them sits directly before the humidity.
+Protocol details are
 based on [aglehmann/pyEcovent](https://github.com/aglehmann/pyEcovent).
 
 ## License

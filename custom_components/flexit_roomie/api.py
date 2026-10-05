@@ -42,14 +42,22 @@ class RoomieStatus:
 def parse_status(data: bytes) -> RoomieStatus:
     if not data.startswith(REPLY_HEADER):
         raise RoomieError(f"Unexpected reply: {data.hex()}")
-    body = data[len(REPLY_HEADER):]
+    body = data[len(REPLY_HEADER) :]
+    if body.endswith(FOOTER):
+        body = body[: -len(FOOTER)]
+
     values: dict[int, bytes] = {}
     i = 0
     while i < len(body):
         param = body[i]
         length = PARAM_LENGTHS.get(param)
         if length is None or i + 1 + length > len(body):
-            break  # unknown parameter or trailing bytes (e.g. footer)
+            # Skip the byte and resync, the way the reference implementation does.
+            # Stopping here instead would drop every parameter that follows, and the
+            # fan does send ids that are not in the table - 0x07 sits between the
+            # airflow mode and the humidity, so humidity would never be read.
+            i += 1
+            continue
         values[param] = body[i + 1 : i + 1 + length]
         i += 1 + length
     if 0x03 not in values:
@@ -63,8 +71,20 @@ def parse_status(data: bytes) -> RoomieStatus:
         speed=one(0x04, 1),
         manual_speed=one(0x05),
         airflow=one(0x06),
-        humidity=one(0x08) if 0x08 in values else None,
+        humidity=_humidity(values),
     )
+
+
+def _humidity(values: dict[int, bytes]) -> int | None:
+    """Relative humidity in percent, or None when the fan has no reading.
+
+    Units without a humidity sensor, and units that have not measured yet, report
+    values outside 1-100; the reference implementation discards those too.
+    """
+    if 0x08 not in values:
+        return None
+    humidity = values[0x08][0]
+    return humidity if 1 <= humidity <= 100 else None
 
 
 class _Protocol(asyncio.DatagramProtocol):

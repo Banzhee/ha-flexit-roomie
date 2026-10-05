@@ -10,18 +10,18 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util.percentage import percentage_to_ranged_value, ranged_value_to_percentage
 
-from . import DOMAIN, RoomieCoordinator
+from .const import DOMAIN, PRESET_MODES
+from .coordinator import FlexitRoomieConfigEntry, RoomieCoordinator
 
 SPEED_RANGE = (1, 3)
-PRESET_MODES = ["ventilation", "heat_recovery", "air_supply"]  # index = protocol value
 
 
-async def async_setup_platform(
-    hass: HomeAssistant, config, async_add_entities: AddEntitiesCallback, discovery_info=None
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: FlexitRoomieConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
-    if discovery_info is None:
-        return
-    async_add_entities(RoomieFan(c) for c in hass.data[DOMAIN])
+    async_add_entities([RoomieFan(entry.runtime_data)])
 
 
 class RoomieFan(CoordinatorEntity[RoomieCoordinator], FanEntity):
@@ -35,11 +35,13 @@ class RoomieFan(CoordinatorEntity[RoomieCoordinator], FanEntity):
     _attr_preset_modes = PRESET_MODES
     _attr_icon = "mdi:hvac"
     _attr_translation_key = "ventilation"
+    _attr_has_entity_name = True
+    _attr_name = None  # the fan is the device's main entity, so it takes its name
 
     def __init__(self, coordinator: RoomieCoordinator) -> None:
         super().__init__(coordinator)
-        self._attr_name = coordinator.name
         self._attr_unique_id = f"{DOMAIN}_{coordinator.client.host}_fan"
+        self._attr_device_info = coordinator.device_info
 
     @property
     def is_on(self) -> bool | None:

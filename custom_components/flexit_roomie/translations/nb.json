@@ -1,4 +1,28 @@
 {
+  "config": {
+    "step": {
+      "user": {
+        "title": "Legg til en Flexit Roomie-vifte",
+        "description": "Gi viften en fast IP-adresse (DHCP-reservasjon i ruteren) først, slik at den ikke endrer seg senere.",
+        "data": {
+          "name": "Navn",
+          "ip_address": "IP-adresse",
+          "port": "Port"
+        },
+        "data_description": {
+          "name": "Vises som navnet på enheten, for eksempel rommet viften står i.",
+          "ip_address": "Adressen til viften på det lokale nettverket.",
+          "port": "La denne stå på 4000 med mindre du har endret den på viften."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Viften svarte ikke. Kontroller IP-adressen, at Home Assistant er på samme nettverk, og at dette er en v1-enhet (nyere v2-enheter støttes ikke)."
+    },
+    "abort": {
+      "already_configured": "Denne viften er allerede satt opp."
+    }
+  },
   "entity": {
     "fan": {
       "ventilation": {
