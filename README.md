@@ -12,6 +12,7 @@ Not affiliated with or endorsed by Flexit or Blauberg.
 - **Fan entity:** on/off, 3 speeds, and the three airflow modes as preset modes
   (Ventilation, Heat recovery, Air supply; translated to Norwegian Bokmål)
 - **Humidity sensor:** the humidity measured by the fan
+- **Boost switch:** turns the fan's boost mode on and off
 - Non-blocking async UDP; the fan is polled every 30 seconds and shows as
   unavailable if it stops answering
 - **Set up from the UI:** add each fan under Settings → Devices & services; the address
@@ -64,12 +65,13 @@ afterwards.
 
 ## Entities
 
-Each fan becomes a device with two entities:
+Each fan becomes a device with three entities:
 
 | Entity | Description |
 |---|---|
 | `fan.<name>` | On/off, speed (33 / 67 / 100 %), preset mode |
 | `sensor.<name>_humidity` | Relative humidity (%) measured by the fan |
+| `switch.<name>_boost` | Boost mode |
 
 If a manual speed has been set in the app, the fan reports it as a percentage of the
 fan's manual range.
@@ -84,12 +86,17 @@ Packets are `6D6F62696C65` ("mobile") + command + `0D0A`, sent to UDP port 4000.
 | Toggle power | `03 00` |
 | Set speed 1-3 | `04 0N` |
 | Set airflow mode 0-2 | `06 0N` |
+| Set boost 0-1 | `14 0N` |
+
+Boost is parameter `0x14` in the status reply. The reference library reads it but never
+writes it, so the `14 0N` command above is inferred from the speed and airflow commands,
+which use the same layout. The switch reads the state back after sending, so if your fan
+expects something else the switch returns to its previous position instead of lying.
 
 The status reply is `master` followed by (parameter, value) pairs. Parameter ids that are
 not in the table are skipped a byte at a time rather than ending the parse, because the
 fan sends ids that are not documented - one of them sits directly before the humidity.
-Protocol details are
-based on [aglehmann/pyEcovent](https://github.com/aglehmann/pyEcovent).
+Protocol details are based on [aglehmann/pyEcovent](https://github.com/aglehmann/pyEcovent).
 
 ## License
 

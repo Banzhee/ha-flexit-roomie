@@ -16,6 +16,7 @@ CMD_STATUS = bytes.fromhex("0100")
 CMD_TOGGLE_POWER = bytes.fromhex("0300")
 CMD_SPEED = 0x04  # 1-3
 CMD_AIRFLOW = 0x06  # 0-2
+CMD_BOOST = 0x14  # 0 off, 1 on
 
 # Parameter id -> number of value bytes
 PARAM_LENGTHS = {
@@ -37,6 +38,7 @@ class RoomieStatus:
     manual_speed: int  # 0-255
     airflow: int  # 0 ventilation, 1 heat recovery, 2 air supply
     humidity: int | None
+    boost: bool | None
 
 
 def parse_status(data: bytes) -> RoomieStatus:
@@ -72,6 +74,7 @@ def parse_status(data: bytes) -> RoomieStatus:
         manual_speed=one(0x05),
         airflow=one(0x06),
         humidity=_humidity(values),
+        boost=bool(one(0x14)) if 0x14 in values else None,
     )
 
 
@@ -150,3 +153,13 @@ class RoomieClient:
         if not 0 <= airflow <= 2:
             raise ValueError("airflow must be 0-2")
         await self._command(bytes([CMD_AIRFLOW, airflow]))
+
+    async def set_boost(self, on: bool) -> None:
+        """Turn boost mode on or off.
+
+        The reference implementation reads parameter 0x14 but never writes it, so
+        the 0/1 value here is inferred from the speed and airflow commands, which
+        are built the same way. The state is read back after the command, so a fan
+        that disagrees shows up as the switch snapping back.
+        """
+        await self._command(bytes([CMD_BOOST, 1 if on else 0]))

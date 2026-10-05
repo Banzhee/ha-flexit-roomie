@@ -17,7 +17,7 @@ from .coordinator import FlexitRoomieConfigEntry, RoomieCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.FAN, Platform.SENSOR]
+PLATFORMS = [Platform.FAN, Platform.SENSOR, Platform.SWITCH]
 
 DEVICE_SCHEMA = vol.Schema(
     {

@@ -36,6 +36,11 @@
           }
         }
       }
+    },
+    "switch": {
+      "boost": {
+        "name": "Boost"
+      }
     }
   }
 }
